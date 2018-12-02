@@ -1,9 +1,10 @@
 package simpledb;
 
+import simpledb.TupleDesc.TDItem;
+
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Iterator;
-import simpledb.TupleDesc.TDItem;
 
 public class QueryPlanVisualizer {
 
@@ -30,30 +31,11 @@ public class QueryPlanVisualizer {
             int d1 = this.calculateQueryPlanTreeDepth(children[0]);
             int d2 = this.calculateQueryPlanTreeDepth(children[1]);
             return Math.max(d1, d2) + 3;
-        }
-        else
-        {
-            if (children!=null && children[0]!=null)
-                return this.calculateQueryPlanTreeDepth(children[0])+2;
+        } else {
+            if (children != null && children[0] != null)
+                return this.calculateQueryPlanTreeDepth(children[0]) + 2;
         }
         return 2;
-    }
-
-    private static class SubTreeDescriptor {
-        int width;
-        int upBarPosition;
-        SubTreeDescriptor leftChild;
-        SubTreeDescriptor rightChild;
-        int textStartPosition;
-        String text;
-        int height;
-
-        SubTreeDescriptor(SubTreeDescriptor leftChild,
-                SubTreeDescriptor rightChild) {
-            this.leftChild = leftChild;
-            this.rightChild = rightChild;
-        }
-
     }
 
     private SubTreeDescriptor buildTree(int queryPlanDepth, int currentDepth,
@@ -115,7 +97,7 @@ public class QueryPlanVisualizer {
                 String field2 = td.getFieldName(jp.getField2()
                         + children[0].getTupleDesc().numFields());
                 thisNode.text = String.format("%1$s(%2$s),card:%3$d", JOIN,
-                        field1 + jp.getOperator() + field2,j.getEstimatedCardinality());
+                        field1 + jp.getOperator() + field2, j.getEstimatedCardinality());
                 int upBarShift = parentUpperBarStartShift;
                 if (JOIN.length() / 2 > parentUpperBarStartShift)
                     upBarShift = JOIN.length() / 2;
@@ -144,7 +126,7 @@ public class QueryPlanVisualizer {
                 String field2 = td.getFieldName(jp.getField2()
                         + children[0].getTupleDesc().numFields());
                 thisNode.text = String.format("%1$s(%2$s),card:%3$d", HASH_JOIN, field1
-                        + jp.getOperator() + field2,j.getEstimatedCardinality());
+                        + jp.getOperator() + field2, j.getEstimatedCardinality());
                 int upBarShift = parentUpperBarStartShift;
                 if (HASH_JOIN.length() / 2 > parentUpperBarStartShift)
                     upBarShift = HASH_JOIN.length() / 2;
@@ -164,8 +146,7 @@ public class QueryPlanVisualizer {
                 thisNode.leftChild = left;
                 thisNode.rightChild = right;
                 thisNode.height = currentDepth;
-            }
-            else if (plan instanceof Aggregate) {
+            } else if (plan instanceof Aggregate) {
                 Aggregate a = (Aggregate) plan;
                 int upBarShift = parentUpperBarStartShift;
                 String alignTxt;
@@ -174,12 +155,12 @@ public class QueryPlanVisualizer {
 
                 if (gfield == Aggregator.NO_GROUPING) {
                     thisNode.text = String.format("%1$s(%2$s),card:%3$d",
-                            a.aggregateOp(), a.aggregateFieldName(),a.getEstimatedCardinality());
+                            a.aggregateOp(), a.aggregateFieldName(), a.getEstimatedCardinality());
                     alignTxt = td.getFieldName(00);
                 } else {
                     thisNode.text = String.format("%1$s(%2$s), %3$s(%4$s),card:%5$d",
                             GROUPBY, a.groupFieldName(), a.aggregateOp(),
-                            a.aggregateFieldName(),a.getEstimatedCardinality());
+                            a.aggregateFieldName(), a.getEstimatedCardinality());
                     alignTxt = GROUPBY;
                 }
                 if (alignTxt.length() / 2 > parentUpperBarStartShift)
@@ -202,7 +183,7 @@ public class QueryPlanVisualizer {
                 thisNode.text = String.format("%1$s(%2$s),card:%3$d", SELECT, children[0]
                         .getTupleDesc().getFieldName(p.getField())
                         + p.getOp()
-                        + p.getOperand(),f.getEstimatedCardinality());
+                        + p.getOperand(), f.getEstimatedCardinality());
                 int upBarShift = parentUpperBarStartShift;
                 if (SELECT.length() / 2 > parentUpperBarStartShift)
                     upBarShift = SELECT.length() / 2;
@@ -223,7 +204,7 @@ public class QueryPlanVisualizer {
                         "%1$s(%2$s),card:%3$d",
                         ORDERBY,
                         children[0].getTupleDesc().getFieldName(
-                                o.getOrderByField()),o.getEstimatedCardinality());
+                                o.getOrderByField()), o.getEstimatedCardinality());
                 int upBarShift = parentUpperBarStartShift;
                 if (ORDERBY.length() / 2 > parentUpperBarStartShift)
                     upBarShift = ORDERBY.length() / 2;
@@ -245,7 +226,7 @@ public class QueryPlanVisualizer {
                 while (it.hasNext())
                     fields += it.next().fieldName + ",";
                 fields = fields.substring(0, fields.length() - 1);
-                thisNode.text = String.format("%1$s(%2$s),card:%3$d", PROJECT, fields,p.getEstimatedCardinality());
+                thisNode.text = String.format("%1$s(%2$s),card:%3$d", PROJECT, fields, p.getEstimatedCardinality());
                 int upBarShift = parentUpperBarStartShift;
                 if (PROJECT.length() / 2 > parentUpperBarStartShift)
                     upBarShift = PROJECT.length() / 2;
@@ -260,18 +241,17 @@ public class QueryPlanVisualizer {
                                 - currentStartPosition);
                 thisNode.leftChild = child;
                 thisNode.height = currentDepth;
-            }
-            else if (plan.getClass().getSuperclass().getSuperclass().getSimpleName().equals("Exchange")) {
-                String name="Exchange";
-                int card=0;
+            } else if (plan.getClass().getSuperclass().getSuperclass().getSimpleName().equals("Exchange")) {
+                String name = "Exchange";
+                int card = 0;
                 try {
                     name = (String) plan.getClass().getMethod("getName").invoke(plan);
                     card = (Integer) plan.getClass().getMethod("getEstimatedCardinality").invoke(plan);
                 } catch (Exception e) {
                     e.printStackTrace();
-                } 
+                }
 
-                thisNode.text = String.format("%1$s,card:%2$d", name,card);
+                thisNode.text = String.format("%1$s,card:%2$d", name, card);
                 int upBarShift = parentUpperBarStartShift;
                 if (name.length() / 2 > parentUpperBarStartShift)
                     upBarShift = name.length() / 2;
@@ -283,7 +263,7 @@ public class QueryPlanVisualizer {
                     thisNode.textStartPosition = thisNode.upBarPosition
                             - name.length() / 2;
                     thisNode.width = thisNode.textStartPosition + thisNode.text.length()
-                                    - currentStartPosition;
+                            - currentStartPosition;
                 } else {
                     thisNode.upBarPosition = child.upBarPosition;
                     thisNode.textStartPosition = thisNode.upBarPosition
@@ -294,19 +274,17 @@ public class QueryPlanVisualizer {
                     thisNode.leftChild = child;
                 }
                 thisNode.height = currentDepth;
-            }
-            else if (plan.getClass().getName().equals("simpledb.Rename"))
-            {
-                String newName=null;
-                int fieldIdx=0;
+            } else if (plan.getClass().getName().equals("simpledb.Rename")) {
+                String newName = null;
+                int fieldIdx = 0;
                 try {
-                    newName=(String) plan.getClass().getMethod("newName", (Class<?>[])null).invoke(plan);
-                    fieldIdx = (Integer) plan.getClass().getMethod("renamedField", (Class<?>[])null).invoke(plan);
+                    newName = (String) plan.getClass().getMethod("newName", (Class<?>[]) null).invoke(plan);
+                    fieldIdx = (Integer) plan.getClass().getMethod("renamedField", (Class<?>[]) null).invoke(plan);
                 } catch (Exception e) {
                     e.printStackTrace();
-                } 
+                }
                 String oldName = plan.getChildren()[0].getTupleDesc().getFieldName(fieldIdx);
-                thisNode.text = String.format("%1$s,%2$s->%3$s,card:%4$d", RENAME,oldName,newName,plan.getEstimatedCardinality());
+                thisNode.text = String.format("%1$s,%2$s->%3$s,card:%4$d", RENAME, oldName, newName, plan.getEstimatedCardinality());
                 int upBarShift = parentUpperBarStartShift;
                 if (RENAME.length() / 2 > parentUpperBarStartShift)
                     upBarShift = RENAME.length() / 2;
@@ -318,7 +296,7 @@ public class QueryPlanVisualizer {
                     thisNode.textStartPosition = thisNode.upBarPosition
                             - RENAME.length() / 2;
                     thisNode.width = thisNode.textStartPosition + thisNode.text.length()
-                                    - currentStartPosition;
+                            - currentStartPosition;
                 } else {
                     thisNode.upBarPosition = child.upBarPosition;
                     thisNode.textStartPosition = thisNode.upBarPosition
@@ -397,5 +375,22 @@ public class QueryPlanVisualizer {
         String tree = this.getQueryPlanTree(physicalPlan);
 
         out.println(tree);
+    }
+
+    private static class SubTreeDescriptor {
+        int width;
+        int upBarPosition;
+        SubTreeDescriptor leftChild;
+        SubTreeDescriptor rightChild;
+        int textStartPosition;
+        String text;
+        int height;
+
+        SubTreeDescriptor(SubTreeDescriptor leftChild,
+                          SubTreeDescriptor rightChild) {
+            this.leftChild = leftChild;
+            this.rightChild = rightChild;
+        }
+
     }
 }
